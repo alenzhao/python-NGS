@@ -1,0 +1,1 @@
+python ~/CODE/JOINTCODE-coral/ancestry/runancestry.py -f hapmap3.10clusters.admixture.AF.1-22only.hg19 --bam ../HGDP-plinkfiles/ERR019687.sorted.bam -o turkish -p 2 --path ~/CODE/JOINTCODE-coral/ancestry/ --strand 0 --pr 0
