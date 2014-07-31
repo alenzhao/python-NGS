@@ -1,0 +1,26 @@
+
+
+01/08/2014
+
+- changed definition of strand-bias calculation (probability of data if genotype is fixed to be reference for all samples on one strand)
+- removed log10 computation in crispEM code
+
+
+Nov 28 2012: strand bias implementation 
+
+calculate likelihood of data given variant allele frequency is 'p' on one strand and '0' on other strand. If this fits better than 'p' on both strands -> false variant ....
+
+
+
+
+July 12 2012
+
+added code pooledFET.c to calculate p-value using more bins (quality values, strand,etc)
+
+June 15 2012
+
+1. overlapping paired-end reads: only reads for which lastposition > start of mate
+2. for CRISP, use reference allele as first allele, handle tri-allelic variants
+3. use the combination of contingency table p-value and the exact genotype calculation statistic, the CT p-value can be powerful for rare variants while exact genotype one is powerful for all variants
+Negative: CT p-value can remove false variants present at low freq present in all pools,
+
