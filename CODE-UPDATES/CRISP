@@ -1,5 +1,9 @@
 
 
+07/31/2014
+
+minor edits to code for error probability tables.. --sse option for turning this on..
+
 06/2014 
 
 added code to calculate context specific (3bp) error rates for each sample using non-variant sites... e.g. GC[A] -> GC[G] 
