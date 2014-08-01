@@ -1,0 +1,9 @@
+/home/vbansal/Public/OldProjects/STSI-ancestry/IndianPopulations-ReichData
+
+132 individuals from India genotyped at ~600K markers: plink files are available 
+
+
+/media/drive2/AncestryPaper/DATASETS/Tibet_31samples_genotypes
+## analysis of 31 Tibetan individuals: don't include strand ambiguous markers -> incorrect results
+python ~/CODE/JOINTCODE-coral/ancestry/runancestry.py -f hapmap3.10clusters.admixture.AF.1-22only --plink=../DATASETS/Tibet_31samples_genotypes/geno_tibet -o sard_00665 -p 2 --path ~/CODE/JOINTCODE-coral/ancestry/ --strand 0 --HWE 1
+
