@@ -1,0 +1,50 @@
+
+
+07/31/2014
+
+minor edits to code for error probability tables.. --sse option for turning this on..
+
+06/2014 
+
+added code to calculate context specific (3bp) error rates for each sample using non-variant sites... e.g. GC[A] -> GC[G] 
+these estimates can then be used in chi-square test to reduce statistic due to heterogeneity in sample-specific error rates
+
+
+01/08/2014
+
+- changed definition of strand-bias calculation (probability of data if genotype is fixed to be reference for all samples on one strand)
+- removed log10 computation in crispEM code
+
+
+11/13/2013
+
+modified variant.c to handle allele counts for bases that span a deletion (after actual deletion position), previously these reads were being ignores (should be counted towards a separate allele), | modified advance_read to return value = 2 | artifically count these reads towards reference to avoid false variants ....
+
+# this removes many false SNPs that tend to occur after long deletions due to misaligned reads....
+# ideal solution would be to do haplotype based calling or consider a window around deletion....
+
+
+11/6/13
+
+added --refbias (default = 0.5, 0.52 for agilent) to account for bias in agilent sureselect capture -> underestimation of allele frequencies compared to Sequenom
+--EM 1 is default
+
+
+Nov 28 2012: strand bias implementation 
+
+calculate likelihood of data given variant allele frequency is 'p' on one strand and '0' on other strand. If this fits better than 'p' on both strands -> false variant ....
+
+
+
+
+July 12 2012
+
+added code pooledFET.c to calculate p-value using more bins (quality values, strand,etc)
+
+June 15 2012
+
+1. overlapping paired-end reads: only reads for which lastposition > start of mate
+2. for CRISP, use reference allele as first allele, handle tri-allelic variants
+3. use the combination of contingency table p-value and the exact genotype calculation statistic, the CT p-value can be powerful for rare variants while exact genotype one is powerful for all variants
+Negative: CT p-value can remove false variants present at low freq present in all pools,
+

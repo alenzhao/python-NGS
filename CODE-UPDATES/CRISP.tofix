@@ -1,0 +1,14 @@
+
+
+June 6 2013
+
+in may cases, the ML estimate is at high values of E01 or E10 (nothing can be done) | what to do in these situations....
+## constrain the error rate to be low (won't work for indels in homopolymer runs...)
+## add prior on indel -> bad for high error rate
+1 51433889 g G +G   283  1246   499  1631  | 0:24:0     MQ=0,1,4,3710;FL=18,9; | AL:+G:663.566523:225,1246,370,1631 A:0.000000 FET:-0.15:0.00
+AF 0.856909 0.856909 LLtotal -694.600 LLnull -4051.47 -2684.52:-1437.80:-745.80 E01 0.17338:0.03622:0.00628 E10 0.04396:0.05000:0.00220
+
+for indels: we need to account for third or fourth allele, this should downweight non-ref genotypes...
+
+
+##need to store number of clipped reads for each position 
