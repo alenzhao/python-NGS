@@ -1,0 +1,154 @@
+-------------------------------------------------------------------------------------------------
+SNIP-Seq: SNP IDENTIFICATION AND GENOTYPE CALLING FROM POPULATION SEQUENCING of TARGETED LOCI 
+-------------------------------------------------------------------------------------------------
+
+Author: Vikas Bansal (vbansal@scripps.edu)
+
+SNIP-Seq is a method to detect SNPs and assign genotypes using sequence data 
+from a population of samples. The method utilizes the set of base calls across all samples
+simultaneously to identify SNPs at each position and then call genotypes. 
+Note that the method is not designed for SNP detection from an individual sample or a small number (< 10)
+of sequenced samples. 
+
+The program has been implemented in the python language and tested on several datasets that involved sequencing of 50-300 samples 
+across few hundred kilobases of the human genome using PCR to capture the targeted regions. 
+The method has been evaluated using sequence data from the Illumina GA and 
+requires the sequence data to be generated using the same sequencing platform, since it performs quality calibration.
+The method can handle variable read lengths, however for best results, it is preferrable to have
+reads of the same length. 
+
+SNIP-Seq can be applied to population data from the targeted sequencing of several megabases 
+from the human genome or even population sequencing of small genomes (< 10 Megabases). 
+For bigger genomes, one can split the pileup files into smaller pieces and run SNIP-Seq independently
+on the pieces. 
+
+ 
+
+INPUT FORMAT: 
+------------------------------------
+
+The program starts off from the aligned reads for each sample. The alignments can be generated
+using any alignment program (MAQ/BWA/etc). From the read alignments for each sample, 
+one needs to generate a pileup file. The first 7 columns of this pileup file are identical  
+to a MAQ pileup file: http://maq.sourceforge.net/maq-manpage.shtml#5
+Each line contains the complete information about the base calls covering one reference position. 
+A script is provided (see below) that generates this pileup file from a sorted .sam file (SAM format).
+
+Each line of this pileup file has 10 columns: 
+
+Column 1: chromosome/locus 
+Column 2: position 
+Column 3: ref-base 
+Column 4: coverage 
+Column 5: basecalls (starting with @ and encoded using the MAQ pileup format) 
+Column 6: qualityvalues (starting with @ and encoded as Sanger format using an offset of 33)
+Column 7: mapping quality values of the read covering each basecall (encoded as chr(MQ)+33) 
+Column 8: position-in-read (comma separated list of integers) 
+Column 9: # of mismatches of reads (encoded as chr(mismatches)+48 ) 
+Column 10: length-of-read (encoded as chr(length), therefore should be greater than 33 and less than 127)
+
+A line of this pileup file looks like this: 
+
+chr1 1108154 A 16 @,,.,........C.,. @11>(;<3A98A5'?=> @{{y{{{{{{{ss{{s{ 36,35,5,26,15,15,23,24,25,25,26,27,10,30,6,35, 1032000021021020 %%%%%%%%%%%%%%%%
+
+Please specify the read length using the --rl option to the program, unless Column 10 is present. 
+Column 10 is useful only for variable length reads and is not usually recommended.
+If you have reads that vary in length, e.g. 35 and 40 bp reads, you can specify the
+longer read length (40) using the --rl option.
+
+
+CONVERTING FROM SAM TO PILEUP FORMAT:
+-------------------------------------
+
+python sam_to_pileup.py samplename.sorted.sam refsequence.fasta  > samplename.pileup 
+
+This script has to be run independently for each sequenced sample. The .sam file should be sorted
+with respect to the fasta file. This script works when the reads are aligned to the reference sequence.
+This script can be used to create pileup files for individual human chromosomes (50-250 megabases), although the speed
+may be slow compared to samtools pileup command.  
+
+Note: Before running SNIP-Seq, please check that each sample has the same number of lines in the pileup file. 
+
+RUNNING SNIP-Seq:
+------------------------------------
+
+usage: SNIPseq.py [options]
+
+options:
+
+  -h, --help            show this help message and exit
+
+  -d PILEUPDIR, --pileupdir=PILEUPDIR  Path to the directory with the pileup files. The name of each sample should be unique.
+
+
+--rl=READLENGTH         read length. If you have reads that vary in length, e.g. 35 and 40 bp reads, you can specify the
+			longer read length (40) using the --rl option. 
+			Alternatively, read length can be specified using the 10th column of the pileup file with the --rl=0 option. 
+
+
+  -c POSBINS, --maxcycles=POSBINS
+                        max number of sequencing cycles, this is equal to the 
+                        readlength for single end reads and 2 x readlength for paired-end reads.
+			For variable length reads, set this to 2 x maximum readlength 
+  
+  --qvoffset            offset in the encoding of base quality values, default is 33 (Sanger format), use 64 for Illumina fastq format 
+
+
+  --mbq=MIN_Q           minimum base quality to consider a base for snp calling, default 10
+
+  --mmq=MIN_M           minimum read mapping quality to consider a read for snp calling, default 10
+
+  --maxm=MAX_MM         maximum number of mismatches allowed for read to be
+                        considered for snp calling. The number of mismatches
+                        for each read is stored in column 9 of the pileup
+                        file. If this column is missing, set this value to 0.
+                        (default value is 3 for 36 bp reads)
+
+  --mfile=SNPFILE       alternate SNP calls (using MAQ/BWA/etc) for all samples
+
+  --dbfile=NCBIFILE     list of dbSNP variants in sequenced region. 
+			Format of this file is 'rsid locus position strand alleles'. 
+
+  --clipl=MIN_POS       ignore the first x bases of a read for snp calling,
+                        default 1
+  --clipr=MAX_POS       ignore the last x bases of a read for snp calling,
+                        default 1
+  --minmq=MIN_MAXMQ     minimum mapping quality of at least one read covering
+                        a variant required to call it as SNP, default 20
+  --minc=MIN_READS      minimum number of reads required for calling position
+                        as SNP, default 5
+  --hetprior=MIN_PRIOR  heterozygote prior, default 0.001
+
+
+Basic example of using the program for 36bp paired-end reads with base qualities in Sanger format: 
+
+python SNIP-seq.py  -d  "directory_with_pileup_files/*pileup"  -c 72  --rl=36 --qvoffset=33  > outputfile
+
+
+PARSING OUTPUT:
+---------------------------------------------------------------------------------
+
+grep 'variant [01] 1' outputfile > listofsnps.out 
+
+This returns a list of all SNPs detected by SNIP-Seq across all sequenced samples. It also outputs statistics about the best likelihood
+score for the SNP in any sequenced sample, the two alleles, the number of samples in which the alternate allele was found, etc. 
+
+
+GENERATING snp-genotype file 
+---------------------------------------------------------------------------------
+
+python process_variants.py outputfile > snps_and_genotypes.out
+
+This script post-processes the output of SNIP-Seq to determine all clean SNPs and the corresponding genotypes for each sample.
+The output of this program is a list of SNPs and the corresponding genotype for each sample in a prettybase-like format.
+
+Format of this file is: 
+
+"contig/chrom" position refbase sampleid genotype genotype-score | coverage ALLELES countA+ countA- countC+ countC- countG+ countG- countT+ countT- Likelihoods homozygous-ref heterozygous homozygous-alt novel/dbsnp 
+
+chr2       1956661 J563444  C AA 108 |   27 ALLELES 19  8  0  0  0  0  0  0 Likelihoods -82.39 -10.81 -0.00 novel
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
