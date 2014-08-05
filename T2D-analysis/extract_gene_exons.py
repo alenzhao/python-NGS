@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import os, glob,sys, subprocess,re,random,math, gzip
 
+## code to extract exon start-end coordinates for genes in a list using ucsc annotations/refseq
 ## BUG FIXED in overlap function on march 21 2013, caused KCNJ11 exon piece to be missed, check if other exons missed 
 
 def compute_exonlist(ucscfile):
