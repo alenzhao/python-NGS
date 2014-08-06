@@ -1,0 +1,4 @@
+08/06/14
+
+bug fixed in hapfragments.c: for (SINGLEREADS =1), overlapping paired-end reads not processed correctly, no variant output 
+
