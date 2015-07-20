@@ -1,9 +1,4 @@
-python-NGS
-==========
 
-miscellaneous python scripts
+07/20/2015 
 
-
-git repository is at /home/vbansal/CODE/GIT on dell desktop 
-
-add scripts to this directory and push to github
+private git repository to store all scripts for indels, T2D analysis etc 
