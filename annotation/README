@@ -1,0 +1,132 @@
+
+05/01/2015
+
+HCN4 commands: 
+
+python gene_translate.py --ref=/home/vbansal/Public/tools/reference-genomes/ncbi37.fa --model=../refseq.genes.ncbi37 --type=all --gene=HCN4 --out=HCN4.all 
+python analyse_gene_mutations.py HCN4.all /media/drive2/Variant-call-datasets/65Kexomes-DGM.v0.1/ExAC.r0.1.sites.vep.vcf.gz controls missense
+python analyse_gene_mutations.py HCN4.all /media/drive2/Variant-call-datasets/65Kexomes-DGM.v0.1/ExAC.r0.1.sites.vep.vcf.gz controls S/NS
+
+
+## Exon 4 has 6 of the disease mutations, Exon 5 has 1 and Exon 7 has 1 
+## Exon 4 is most strongly biased against missense, Exon 7 slightly.. | Exon 1 and 8 have no bias... 
+
+## Exon 7 = 11 , 14 , 29758 , 11473 ] = 0.0031107  | exon4 = 21 , 9 , 16699 , 32259 = 0.0000692063
+## assess additional signal from allele frequency spectrum.... 
+
+
+03/29/2015 
+
+## identify genes where missense mutations in only some regions are below expectation..
+
+## add function to take dbSNFP file and add polyphen/conservation scores to each missense mutation in GENE.missense.all file ## transcript model is important 
+python read_dbSNFP.py MLL2  ~/Public/tools/reference-genomes/ncbi37.fa
+## combine this with gene_translate or run afterwards...
+
+python gene_translate.py --ref=/home/vbansal/Public/tools/reference-genomes/ncbi37.fa --model=../refseq.genes.ncbi37 --type=stop --gene=MLL2 --out=MLL2.stopgain.all
+python analyse_gene_mutations.py MLL2.stopgain.all /media/drive2/Kabuki_mutations/MUTATION_LIST
+
+## code to explore space of all possible coding mutations per gene/transcript | annotate using mutation rates and known mutations 
+## gene_translate should output chr:pos for all mutations so that we can match real mutations (from ExAc) without any annotation 
+
+gene_translate.py: (1) output coding sequence of exons of each gene and the translation as well. can be used to output set of all coding mutations per transcript (all stop, all missense,etc), study frameshift mutations...
+
+read_fasta_bychrom.py: read fasta file and build index if it doesnt exist, if index exists, it will read sequence of only that chromosome 
+
+read_muttable.py: read 64 trimer mutation matrix file and output hashtable 
+
+multinomial_test.py: calculate p-value of mutation distribution across exons of a gene relative to mutation rate matrix 
+
+
+
+11/19/2014
+
+
+## for indels at splice boundary, frameshift depends on # of bases deleted...
+
+##indels that do not cause frameshift or splicing defect since there is tandem duplication.... 
+6       160560897       exonic,splicing;SLC22A1,SLC22A1;frameshift-deletion;NM_003057:c.1275_1276del:p.425_426del;rs113569197;- CTGGTAAGT       C       989810  PASS    FS=frameshift;GL=SLC22A1,SLC22A1;NM=NM_153187,NM_003057;ANNO=Exon7/10,160560684:160560899,Exon7/11,160560684:160560899; NP=132;DP=15744,69089;VT=DELETION;CT=-376.3;VP=132;VF=EMpass;AC=132;MQ=1,1,1,127244;HP=10;FLANKSEQ=tttatctcac:CTGGTAAGTTGGTAAGTTG:tctgctttca;EMstats=0.579388:98981.04:-39537.31:HWE=0.1
+
+
+
+1.. identify splicing variants and coding variants that affect last base of exon... G->A 
+
+annovar cannot annotate block substitutions....
+
+## incorrect... need to fix..
+1       236406765       exonic;ERO1LB;frameshift-deletion;NM_019891:c.458_461del:p.153_154del;-;-       CCAGT   CTAGT   107     PASS    FS=SNV;GL=ERO1LB;NM=NM_019891;ANNO=Exon6/16,236406721:236406795;        NP=132;DP=46548,12273;VT=SNV,DELETION;CT=-47.1,-321.9;VP=1,1;VF=EMpass,EMpass;AC=1,1;MQ=0,0,0,89605;HP=0,2;FLANKSEQ=catatcttgc:CCAGTCA:atgaaagctt;EMstats=0.000158:10.75:-4.04:HWE=-0.0,0.000158:26.54:-20.76:HWE=-0.0;FLAG=SPLIT
+
+## for frameshift near start: report if there is 'M' codon after it.... 
+## identify exon splicingness for frameshift/stop (# of transcripts with that exon)....
+## frameshift + splicing change = functional transcript.... 
+
+## use 65K exome data to identify important 'ESE' (exonic splicing enhancer sequences)... pairs of ESE ...
+
+
+09/18/2014
+
+##### take a VCF file and refseq gene info and annotate the indels and SNPs
+#### refseq file coordinates are 0-based while VCF is 1-based !!!
+#### refseq file is stranded (genes on - strand go from right to left)
+
+### TODO last modified sept 18 2014 
+### for indels in first or last exon, print distance from end of transcript.... or print position in amino acid sequence, NMD potential or not...
+### for coding indels, print frameshift or not... account for fact if indel partially overlaps exon... rightshift of indel can move it into Intron !! 
+### for frameshift indel, print poteintial for in-frame product in combination with alternative splicing 
+
+
+"""
+https://github.com/konradjk/loftee/blob/master/README.md
+
+1. for each gene, identify potential new start sites downstream of original one...
+2. identify exons that are non-canonical, less conserved -> frameshift is unlikely to have an impact 
+3. identify if a frameshift deletes an important domain or not...
+4. identify combination of Alternative Splicing + frameshift indel -> new in-frame product... 
+One potential explanation for this startling observation is that cells routinely link alternative splicing and NMD to regulate the abundance of mRNA transcripts
+http://www.ncbi.nlm.nih.gov/books/NBK6088/
+
+roughly a third of reliably inferred alternative splicing events in humans result in mRNA isoforms that harbor a premature termination codon (PTC).
+Such transcripts can arise through various patterns of alternative splicing (Fig. 2), which may introduce an in-frame termination codon, may induce a frameshift which gives rise to a downstream termination codon, or may introduce an exon-exon junction downstream of the original stop codon. The prevalence of these NMD-targeted transcripts calls for a reconsideration of the roles of alternative splicing and NMD.
+
+We observed a significant enrichment in homopolymer sequences in genes undergoing alternative splicing in comparison to genes with a single annotated protein isoform. Furthermore, the comparison of alternatively and constitutively spliced exons revealed a significant difference in homopolymers abundance, size, and codon composition depending on the splicing pattern of the exon in which they are found.
+http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2877572/
+If homopolymers sequences are under relaxed constraints when located in ASE, we should expect a larger absolute variation of their size across species in comparison to single amino acid repeats found in constitutively spliced exons
+
+haplotype annotation, 2 indels, SNP + indel, AS + indel, etc...
+
+## combined effect is -6 -> no frameshift
+9	107367392	.	TGTTA	T	.	.	FS=frameshift;GL=OR13C2;NM=NM_001004481;ANNO=Exon1/1,107366951:107367908;callers=bwa,isaac,cgi;isPolymorphic=1;editDista
+nce=5	GT:ED	1|0:5
+9	107367664	.	AGC	A	.	.	FS=frameshift;GL=OR13C2;NM=NM_001004481;ANNO=Exon1/1,107366951:107367908;callers=bwa,isaac,cgi;isPolymorphic=1;editDista
+nce=5	GT:ED	1|0:5
+
+7	150783900	.	C	CG	.	.	FS=frameshift;GL=AGAP3,AGAP3;NM=NM_001042535,NM_031946;ANNO=Exon1/9,150783825:150784159,Exon1/18,150783825:150784159;cal
+lers=bwa;isPolymorphic=1;editDistance=4	GT:ED	1|1:5
+7	150783908	.	C	CG	.	.	FS=frameshift;GL=AGAP3,AGAP3;NM=NM_001042535,NM_031946;ANNO=Exon1/9,150783825:150784159,Exon1/18,150783825:150784159;cal
+lers=bwa;isPolymorphic=1;editDistance=4	GT:ED	1|1:5
+7	150783918	.	C	CG	.	.	FS=frameshift;GL=AGAP3,AGAP3;NM=NM_001042535,NM_031946;ANNO=Exon1/9,150783825:150784159,Exon1/18,150783825:150784159;cal
+lers=bwa;isPolymorphic=1;editDistance=4	GT:ED	1|1:5
+
+
+missed annotation for 3	16926539	.	CT	C  since for one transcript it is too far away... 
+89	NM_015184	chr3	+	16974581	17132098	17051216	17131404	6	16974581,17051165,17056199,17084365,17109447,17131224,	16974783,17053652,17056403,17084441,17109557,17132098,	0	PLCL2	cmpl	cmpl	-1,0,0,0,1,0,
+89	NM_001144382	chr3	+	16926451	17132098	16926534	17131404	7	16926451,16926562,17051165,17056199,17084365,17109447,17131224,	16926548,16926865,17053652,17056403,17084441,17109557,17132098,	0	PLCL2	cmpl	cmpl	0,0,0,0,0,1,0,
+
+
+frameshift in exon with less selective constraint (non-syn mutations) -> not functional
+
+coding region starts at 133969496 (-) -> variants just in beginning. 
+3	133969437	.	A	AG	.	.	FS=frameshift;GL=RYK,RYK;NM=NM_001005861,NM_002958;ANNO=Exon1/15,133969266:133969586,Exon1/15,133969266:133969586;caller
+s=bwa,isaac,cortex;isPolymorphic=1;editDistance=6	GT:ED	1|1:6
+3	133969487	.	G	GC	.	.	FS=frameshift;GL=RYK,RYK;NM=NM_001005861,NM_002958;ANNO=Exon1/15,133969266:133969586,Exon1/15,133969266:133969586;caller
+s=bwa,isaac,cortex;isPolymorphic=1;editDistance=6	GT:ED	1|1:6
+
+
+## indel in last exon and towards very end, no effect
+11      31811482        .       TTA     T       .       PASS    FS=frameshift;GL=PAX6,PAX6,PAX6,PAX6,PAX6,PAX6,PAX6;NM=NM_001258465,NM_000280,NM_001258464,NM_001604,NM_001258463,NM_001127612,NM_001258462;ANNO=Exon12/12,31806339:31811567,Exon13/13,31806339:31811567,Exon13/13,31806339:31811567,Exon14/14,31806339:31811567,Exon14/14,31806339:31811567,Exon13/13,31806339:31811567,Exon14/14,31806339:31811567;SREADS=3,3,0,0;HOMLEN=0;SVLEN=-2;TYPE=G    SREADS=3,3,0,0;HOMLEN=0;SVLEN=-2;TYPE=G
+
+
+## two frameshift that added together -> -15 but far apart... check if haplotype thing works.. looks like they are in LD.. gene is non-functional...
+12      51723598        .       A       AG      .       PASS    FS=frameshift;GL=CELA1;NM=NM_001971;ANNO=Exon7/8,51723467:51723617;SREADS=18,8,17,7;HOMLEN=5;SVLEN=1;TYPE=G;HOMSEQ=GGGGG        SREADS=18,8,17,7;HOMLEN=5;SVLEN=1;TYPE=G;HOMSEQ=GGGGG
+12      51740387        .       ACTGGACCATATCCACTTACCATAAAGGAC  AACACCAGGAAGCG  .       PASS    FS=frameshift;GL=CELA1;NM=NM_001971;ANNO=Exon1/8,51740406:51740463,overlap;SREADS=0,3,4,7;HOMLEN=2;SVLEN=-16;TYPE=S;HOMSEQ=CT   SREADS=0,3,4,7;HOMLEN=2;SVLEN=-16;TYPE=S;HOMSEQ=CT
+
